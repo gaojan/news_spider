@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block content_header %}
+<h1>定期任务</h1>
+<ol style="float: right;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 12px;
+    padding: 7px 5px;
+    position: absolute;
+    top: 15px;
+    right: 10px;">
+    <button type="button" class="btn btn-success btn-flat" style="margin-top: -10px;" data-toggle="modal"
+            data-target="#job-run-modal">添加任务
+    </button>
+</ol>
+{% endblock %}
+{% block content_body %}
+<div class="box">
+    <div class="box-header">
+        <h3 class="box-title">定期任务 (Spiders)</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-striped">
+            <tr>
+                <th style="width: 10px">No.</th>
+                <th style="width: 30px">月份</th>
+                <th style="width: 30px">日期</th>
+                <th style="width: 30px">星期</th>
+                <th style="width: 30px">时</th>
+                <th style="width: 30px">分</th>
+                <th style="width: 40px">爬虫</th>
+                <th style="width: 40px">优先级</th>
+                <th style="width: 100px">参数</th>
+                <th style="width: 40px">标签</th>
+                <th style="width: 40px">启用情况</th>
+                <th style="width: 100px">运行情况</th>
+            </tr>
+            {% for job_instance in job_instance_list %}
+            <tr>
+                <td><a name="{{ job_instance.job_instance_id }}">{{ job_instance.job_instance_id }}</a></td>
+                <td>{{ job_instance.cron_month }}</td>
+                <td>{{ job_instance.cron_day_of_month }}</td>
+                <td>{{ job_instance.cron_day_of_week }}</td>
+                <td>{{ job_instance.cron_hour }}</td>
+                <td>{{ job_instance.cron_minutes }}</td>
+                <td>{{ job_instance.spider_name }}</td>
+                {% if job_instance.priority == -1 %}
+                <td>
+                    <span class="label label-default">低</span>
+                </td>
+                {% elif job_instance.priority == 0 %}
+                <td>
+                    <span class="label label-info">正常</span>
+                </td>
+                {% elif job_instance.priority == 1 %}
+                <td>
+                    <span class="label label-warning">高</span>
+                </td>
+                {% elif job_instance.priority == 2 %}
+                <td>
+                    <span class="label label-danger">最高</span>
+                </td>
+                {% endif %}
+                <td class="txt-args" data-toggle="tooltip" data-placement="right"
+                    title="{{ job_instance.spider_arguments }}">{{ job_instance.spider_arguments }}
+                </td>
+                <td>{{ job_instance.tags }}</td>
+                {% if job_instance.enabled %}
+                <td>
+                    <a href="/project/{{ project.id }}/job/{{ job_instance.job_instance_id }}/switch"><span
+                            class="label label-success">启用</span></a>
+                </td>
+                {% else %}
+                <td>
+                    <a href="/project/{{ project.id }}/job/{{ job_instance.job_instance_id }}/switch"><span
+                            class="label label-danger">禁用</span></a>
+                </td>
+                {% endif %}
+                <td>
+                    <a href="/project/{{ project.id }}/job/{{ job_instance.job_instance_id }}/run"><span
+                            class="label label-info">运行</span></a>
+                    <a href="/project/{{ project.id }}/job/{{ job_instance.job_instance_id }}/remove"><span
+                            class="label label-danger">移除</span></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" role="dialog" id="job-run-modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/project/{{ project.id }}/job/add" method="post">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span></button>
+                    <h4 class="modal-title">添加定期任务</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>选择爬虫</label>
+                                <select class="form-control" name="spider_name">
+                                    {% for spider in spider_list %}
+                                    <option value="{{ spider.spider_name }}">{{ spider.spider_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>优先级</label>
+                                <select class="form-control" name="priority">
+                                    <option label="Low" value="-1">低</option>
+                                    <option label="Normal" value="0" selected="selected">正常</option>
+                                    <option label="High" value="1">高</option>
+                                    <option label="Highest" value="2">最高</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>参数</label>
+                                <input type="text" name="spider_arguments" class="form-control"
+                                       placeholder="foo=1,bar=2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>选择月份</label>
+                                <select class="form-control" name="cron_month">
+                                    <option value="*" selected="selected">每月</option>
+                                    {% for i in range(1,13) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>选择星期几</label>
+                                <select class="form-control" name="cron_day_of_week">
+                                    <option value="*" selected="selected">每天</option>
+                                    <option value="0">星期一</option>
+                                    <option value="1">星期二</option>
+                                    <option value="2">星期三</option>
+                                    <option value="3">星期四</option>
+                                    <option value="4">星期五</option>
+                                    <option value="5">星期六</option>
+                                    <option value="6">星期日</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>选择日期</label>
+                                <select class="form-control" name="cron_day_of_month">
+                                    <option value="*" selected="selected">每天</option>
+                                    {% for i in range(1,32) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>选择时间(时)</label>
+                                <select class="form-control" name="cron_hour">
+                                    <option value="*" selected="selected">每小时</option>
+                                    {% for i in range(0,24) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>选择时间(分)</label>
+                                <select class="form-control" name="cron_minutes">
+                                    <option value="0" selected="selected">0</option>
+                                    {% for i in range(5,61,5) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                    <option value="*">每分钟</option>
+                                    <option value="*/2">每2分钟</option>
+                                    <option value="*/3">每3分钟</option>
+                                    <option value="*/4">每4分钟</option>
+                                    <option value="*/5">每5分钟</option>
+                                    <option value="*/10">每10分钟</option>
+                                    <option value="*/15">每15分钟</option>
+                                    <option value="*/30">每30分钟</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <h4>高级选项</h4>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>选择后台程序</label>
+                                <select class="form-control" name="daemon">
+                                    <option value="auto">自动</option>
+                                    {% for server in servers %}
+                                    <option value="{{ server }}">{{ server }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>自定义定时任务 (m h dom mon dow)</label>
+                                <input type="text" name="cron_exp" class="form-control"
+                                       placeholder="0 * * * * ">
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="run_type" value="periodic">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+{% endblock %}
